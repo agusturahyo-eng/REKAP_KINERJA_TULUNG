@@ -58,7 +58,7 @@
         .pct-hijau  { background-color: #28a745 !important; color: #ffffff !important; font-weight: bold; }
         .pct-biru   { background-color: #007bff !important; color: #ffffff !important; font-weight: bold; }
 
-        .legend-bar { display: flex; gap: 10px; font-size: 11px; margin-top: 6px; margin-bottom: 6px; flex-wrap: wrap; align-items: center; justify-content: center; }
+        .legend-bar { display: flex; gap: 10px; font-size: 11px; margin-top: 8px; flex-wrap: wrap; align-items: center; }
         .legend-item { padding: 3px 8px; border-radius: 4px; font-weight: bold; }
 
         /* Toggle Kolom Rekap */
@@ -81,11 +81,9 @@
         .inp-tbl { width: 95%; box-sizing: border-box; padding: 4px; font-size: 12px; }
         .inp-num { width: 55px; text-align: center; padding: 4px; font-size: 12px; }
 
-        /* Gaya Tabel Rekap Kinerja Manbill Persis Gambar Excel (Lebar Proporsional & Rapat Otomatis) */
-        #capture-area { text-align: center; }
-        #tabel-rekap { border-collapse: collapse; width: auto; margin: 0 auto; font-family: Calibri, 'Segoe UI', sans-serif; font-size: 12px; border: 1.5px solid #000; }
-        #tabel-rekap th, #tabel-rekap td { border: 1px solid #555; padding: 3px 7px; color: #000; white-space: nowrap; }
-        #tabel-rekap thead th, #tabel-harian thead th { position: static !important; top: auto !important; }
+        /* Gaya Tabel Rekap Kinerja Manbill Persis Gambar Excel */
+        #tabel-rekap { border-collapse: collapse; width: 100%; font-family: Calibri, 'Segoe UI', sans-serif; font-size: 12px; border: 1.5px solid #000; }
+        #tabel-rekap th, #tabel-rekap td { border: 1px solid #555; padding: 4px 6px; color: #000; }
         #tabel-rekap thead th { font-weight: bold; color: #000 !important; text-transform: uppercase; border: 1px solid #000; }
         #tabel-rekap th.hdr-kiri { background-color: #0070c0 !important; color: #000 !important; }
         #tabel-rekap th.hdr-pdil { background-color: #a9d08e !important; color: #000 !important; }
@@ -252,7 +250,7 @@
 
         <div class="card" style="border-left: 4px solid #28a745; background:#f4fbf6;">
             <h3>⚡ 2B. Tarik Data PDIL Langsung dari Server ACMT (<code>fisikmeterlpb</code>) — Anti-Timeout PDF!</h3>
-            <p style="font-size:12px;color:#444;margin-top:0;">Solusi saat download PDF di ACMT gagal/timeout karena data terlalu banyak. Silakan pilih: <b>(Cara 1 - Paling Aman)</b> Klik Bookmark di tab ACMT untuk mengunduh file <code>.json</code> lalu upload di bawah, atau <b>(Cara 2)</b> Paste <i>Copy as fetch</i> / Token Bearer ACMT untuk menarik langsung dari halaman ini.</p>
+            <p style="font-size:12px;color:#444;margin-top:0;">Solusi saat download PDF di ACMT gagal/timeout karena data terlalu banyak. Bapak bisa memilih: <b>(Cara 1 - Paling Aman)</b> Klik Bookmark di tab ACMT untuk mengunduh file <code>.json</code> lalu upload di bawah, atau <b>(Cara 2)</b> Paste <i>Copy as fetch</i> / Token Bearer ACMT untuk menarik langsung dari halaman ini.</p>
 
             <!-- Opsi 1: Upload File JSON/Excel hasil Bookmarklet ACMT -->
             <div class="action-bar" style="background:#ffffff; padding:10px; border-radius:6px; border:1px solid #c3e6cb;">
@@ -269,7 +267,7 @@
                     <ol style="margin:4px 0 8px 18px; padding:0;">
                         <li>Klik tombol <b>"📋 Copy Kode Bookmark"</b> di bawah, lalu buat Bookmark baru di Chrome (klik kanan di Bar Bookmark Chrome &rarr; <i>Add page / Tambahkan halaman</i>).</li>
                         <li>Beri nama <b>"⬇️ Tarik PDIL ACMT"</b>, dan pada kolom <b>URL</b> tempelkan (Paste) kode yang sudah disalin.</li>
-                        <li>Saat membuka halaman <b>Monitoring Fisik Meter MPB</b> di ACMT, cukup klik Bookmark tersebut (atau Paste kodenya di Console F12). Skrip otomatis mengambil token login aktif, menarik seluruh halaman secara aman, lalu mengunduh file <code>PDIL_ACMT_52405.json</code>!</li>
+                        <li>Saat Bapak sedang membuka halaman <b>Monitoring Fisik Meter MPB</b> di ACMT, cukup klik Bookmark tersebut (atau Paste kodenya di Console F12). Skrip otomatis mengambil token login Bapak, menarik seluruh halaman secara aman, lalu mengunduh file <code>PDIL_ACMT_52405.json</code>!</li>
                     </ol>
                 </div>
                 <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
@@ -311,7 +309,7 @@
     <div class="panel" id="panel-3">
         <div class="card">
             <h3>📥 Laporan Harian CSV (Format Siap Copas Persis Excel: <code>nip;TTTT-BB-TT;realisasi</code>)</h3>
-            <p style="font-size:12.5px;color:#555;">Tampilan sudah disesuaikan persis dengan format tabel Excel. Klik tombol <b>📋 Copy Data Saja</b> atau <b>📋 Copy + Header</b> untuk langsung menyalin blok kuning tanpa perlu mengedit apa pun, atau klik tombol <b>⬇️ CSV</b>.</p>
+            <p style="font-size:12.5px;color:#555;">Tampilan sudah disamakan persis dengan tabel Excel Bapak. Klik tombol <b>📋 Copy Data Saja</b> atau <b>📋 Copy + Header</b> untuk langsung menyalin blok kuning tanpa perlu mengedit apa pun, atau klik tombol <b>⬇️ CSV</b>.</p>
             
             <div class="action-bar" style="background:#eef4fb; padding:10px; border-radius:6px;">
                 <label><b>Pilih Tanggal Laporan (1-31):</b>
@@ -495,7 +493,7 @@
 
         <div class="card" style="border-left: 4px solid #e66b00;">
             <h3>🎯 1. Update Target Massal Per Jenis Rekap (Isi Serentak / Upload File Excel / Copy-Paste Excel)</h3>
-            <p style="font-size:12px;color:#555;margin-bottom:10px;">Pilih jenis rekap di bawah. Tersedia opsi untuk: <b>(a)</b> mengisi 1 angka serentak, <b>(b)</b> mengupload file Excel/CSV khusus rekap tersebut, atau <b>(c)</b> Copy-Paste langsung deretan angka dari Excel, lalu klik <b>💾 Simpan Target Rekap Ini ke Database</b>.</p>
+            <p style="font-size:12px;color:#555;margin-bottom:10px;">Pilih jenis rekap di bawah. Bapak bisa: <b>(a)</b> mengisi 1 angka serentak, <b>(b)</b> mengupload file Excel/CSV khusus rekap tersebut, atau <b>(c)</b> Copy-Paste langsung deretan angka dari Excel, lalu klik <b>💾 Simpan Target Rekap Ini ke Database</b>.</p>
             
             <div class="action-bar" style="background:#fff8e1; padding:10px; border-radius:6px; border:1px solid #ffe082;">
                 <label><b>1. Pilih Rekap:</b>
@@ -2004,7 +2002,7 @@ async function tarikLangsungDariAcmt() {
     // Ekstrak Token JWT (eyJ...)
     const mJwt = rawInp.match(/eyJ[a-zA-Z0-9_-]+\.eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+/);
     if (!mJwt) {
-        return setStatus('st-acmt', '⚠️ Token Bearer (eyJ...) tidak ditemukan pada teks yang ditempel!', 'err');
+        return setStatus('st-acmt', '⚠️ Token Bearer (eyJ...) tidak ditemukan pada teks yang Bapak tempel!', 'err');
     }
     const token = mJwt[0];
 
@@ -2205,7 +2203,8 @@ function renderDashboardTable() {
     let hRow1 = `<tr>
         <th rowspan="2" class="hdr-kiri" style="width:32px;">NO</th>
         <th rowspan="2" class="hdr-kiri" style="min-width:105px;">KOORDINATOR</th>
-        <th rowspan="2" class="hdr-kiri" style="width:45px;">KODE</th>
+        <th rowspan="2" class="hdr-kiri" style="width:42px;">KODE</th>
+        <th rowspan="2" class="hdr-kiri" style="width:42px;">KODE</th>
         <th rowspan="2" class="hdr-kiri" style="min-width:155px;">PETUGAS</th>`;
     let hRow2 = `<tr>`;
 
@@ -2280,6 +2279,9 @@ function renderDashboardTable() {
             const clsBaris = (idxDalamGrup % 2 === 0) ? tema.clsZebra : 'zebra-putih';
 
             const k = (p.kode_baca || '').toLowerCase();
+            // Sesuai gambar Bapak: khusus c07 kolom kode pertama tertulis c42, dan c12 tertulis c41 (jika ada kode_lama, atau tampilkan k)
+            const kode1 = (k === 'c07') ? 'c42' : ((k === 'c12') ? 'c41' : k);
+            const kode2 = k;
 
             const tPdil = p.target_pdil || 0, sPdil = cPdil[k] || 0;
             const tMob  = p.target_pln_mobile || 0, sMob = cMob[p.nama_petugas] || 0;
@@ -2298,7 +2300,8 @@ function renderDashboardTable() {
             html += `<tr class="${clsBaris}">
                 <td class="col-no">${p.no_urut || globalNo}</td>
                 ${tdKoordinator}
-                <td class="sel-data"><b>${k}</b></td>
+                <td class="sel-data">${kode1}</td>
+                <td class="sel-data">${kode2}</td>
                 <td class="sel-data" style="text-align:left;">${p.nama_petugas}</td>
                 ${showPdil ? fmtCell(tPdil, sPdil, false) : ''}
                 ${showMob  ? fmtCell(tMob, sMob, false)   : ''}
@@ -2318,7 +2321,7 @@ function renderDashboardTable() {
     });
 
     html += `<tr class="baris-jumlah">
-        <td colspan="4" style="text-align:right; padding-right:15px;">JUMLAH</td>
+        <td colspan="5" style="text-align:right; padding-right:15px;">JUMLAH</td>
         ${showPdil ? fmtCell(tot.tPdil, tot.sPdil, true) : ''}
         ${showMob  ? fmtCell(tot.tMob, tot.sMob, true)   : ''}
         ${showPrev ? fmtCell(tot.tPrev, tot.sPrev, true) : ''}
@@ -2531,16 +2534,8 @@ async function copyGambarWA(idCapture, idScroll, idJudul, idBtn, idStatus, fileN
 
     const prevMaxHeight = scrollBox.style.maxHeight;
     const prevOverflow = scrollBox.style.overflow;
-    const prevCapWidth = captureArea.style.width;
-    const prevCapDisplay = captureArea.style.display;
-    const prevCapMargin = captureArea.style.margin;
-
     scrollBox.style.maxHeight = 'none';
     scrollBox.style.overflow = 'visible';
-    // Kunci lebar area tangkapan gambar agar pas membungkus tabel (fit-content), tidak melebar selebar monitor!
-    captureArea.style.width = 'fit-content';
-    captureArea.style.display = 'inline-block';
-    captureArea.style.margin = '0 auto';
     judulCetak.style.display = 'block';
 
     const thList = captureArea.querySelectorAll('th');
@@ -2569,9 +2564,6 @@ async function copyGambarWA(idCapture, idScroll, idJudul, idBtn, idStatus, fileN
     } finally {
         scrollBox.style.maxHeight = prevMaxHeight;
         scrollBox.style.overflow = prevOverflow;
-        captureArea.style.width = prevCapWidth;
-        captureArea.style.display = prevCapDisplay;
-        captureArea.style.margin = prevCapMargin;
         judulCetak.style.display = 'none';
         thList.forEach(th => th.style.position = 'sticky');
         btn.disabled = false;
@@ -2594,7 +2586,7 @@ async function copyTeksWA() {
     }
 }
 
-// ================= 6. GENERATOR CSV PERSIS FORMAT EXCEL (SIAP COPAS) =================
+// ================= 6. GENERATOR CSV PERSIS FORMAT EXCEL BAPAK (SIAP COPAS) =================
 async function siapkanDataCsv() {
     const tgl = parseInt(document.getElementById('tglCsv').value);
     const bln = parseInt(document.getElementById('pilihBulan').value);
@@ -4175,4 +4167,4 @@ window.onload = () => {
 };
 </script>
 </body>
-
+</html>
