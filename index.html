@@ -58,8 +58,8 @@
         .pct-hijau  { background-color: #28a745 !important; color: #ffffff !important; font-weight: bold; }
         .pct-biru   { background-color: #007bff !important; color: #ffffff !important; font-weight: bold; }
 
-        .legend-bar { display: flex; gap: 10px; font-size: 11px; margin-top: 6px; margin-bottom: 6px; flex-wrap: wrap; align-items: center; justify-content: center; }
-        .legend-item { padding: 3px 8px; border-radius: 4px; font-weight: bold; }
+        .legend-bar { display: flex; gap: 6px; font-size: 11px; margin-top: 4px; margin-bottom: 6px; flex-wrap: wrap; align-items: center; justify-content: center; }
+        .legend-item { padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 
         /* Toggle Kolom Rekap */
         .toggle-rekap-box { display: flex; gap: 12px; align-items: center; background: #f1f8e9; border: 1px solid #c5e1a5; padding: 7px 12px; border-radius: 6px; font-size: 13px; flex-wrap: wrap; }
@@ -82,8 +82,8 @@
         .inp-num { width: 55px; text-align: center; padding: 4px; font-size: 12px; }
 
         /* Gaya Tabel Rekap Kinerja Manbill Persis Gambar Excel (Lebar Proporsional & Rapat Otomatis) */
-        #capture-area { text-align: center; }
-        #tabel-rekap { border-collapse: collapse; width: auto !important; max-width: max-content !important; margin: 0 auto !important; font-family: Calibri, 'Segoe UI', sans-serif; font-size: 12px; border: 1.5px solid #000; }
+        #capture-area { display: inline-block; width: fit-content; max-width: 100%; text-align: left; background: #ffffff; padding: 12px 14px; border-radius: 6px; }
+        #tabel-rekap { border-collapse: collapse; width: auto !important; max-width: max-content !important; margin: 0 !important; font-family: Calibri, 'Segoe UI', sans-serif; font-size: 12px; border: 1.5px solid #000; }
         #tabel-rekap th, #tabel-rekap td { border: 1px solid #555; padding: 3px 7px; color: #000; white-space: nowrap; }
         #tabel-rekap thead th, #tabel-harian thead th { position: static !important; top: auto !important; }
         #tabel-rekap thead th { font-weight: bold; color: #000 !important; text-transform: uppercase; border: 1px solid #000; }
@@ -164,9 +164,10 @@
 
         <div id="st-rekap" class="status"></div>
 
+        <div style="text-align:center; width:100%; overflow-x:auto;">
         <div id="capture-area">
-            <div id="judul-cetak" class="judul-cetak" style="text-align:left; margin-bottom:8px;">
-                <div style="font-weight:bold; font-size:14px; color:#000;">REKAP KINERJA MANBILL TULUNG</div>
+            <div id="judul-cetak" class="judul-cetak" style="text-align:center; margin-bottom:8px;">
+                <div style="font-weight:bold; font-size:15px; color:#000; letter-spacing:0.3px;">REKAP KINERJA MANBILL TULUNG</div>
                 <div id="sub-cetak" style="font-size:13px; color:#000; font-weight:bold; margin-top:2px;"></div>
             </div>
 
@@ -179,12 +180,13 @@
                 <span class="legend-item pct-biru">≥ 100% (Biru)</span>
             </div>
 
-            <div class="table-wrap" id="table-scroll">
+            <div class="table-wrap" id="table-scroll" style="display:inline-block; width:fit-content;">
                 <table id="tabel-rekap">
                     <thead id="thead-rekap"></thead>
                     <tbody id="tbody-rekap"></tbody>
                 </table>
             </div>
+        </div>
         </div>
     </div>
 
@@ -2539,17 +2541,25 @@ async function copyGambarWA(idCapture, idScroll, idJudul, idBtn, idStatus, fileN
 
     scrollBox.style.maxHeight = 'none';
     scrollBox.style.overflow = 'visible';
-    // Kunci lebar area tangkapan gambar agar pas membungkus tabel (fit-content), tidak melebar selebar monitor!
-    captureArea.style.width = 'fit-content';
-    captureArea.style.display = 'inline-block';
-    captureArea.style.margin = '0 auto';
     judulCetak.style.display = 'block';
 
     const thList = captureArea.querySelectorAll('th');
     thList.forEach(th => th.style.position = 'static');
 
+    // Ukur lebar tabel aktual agar kotak gambar, judul rata tengah, dan legend-bar pas selebar tabel tanpa ruang kosong di kiri-kanan!
+    const tblEl = captureArea.querySelector('table');
+    const tblWidth = tblEl ? tblEl.offsetWidth : 0;
+    captureArea.style.display = 'inline-block';
+    captureArea.style.width = tblWidth > 0 ? (tblWidth + 'px') : 'fit-content';
+    captureArea.style.margin = '0';
+
     try {
-        const canvas = await html2canvas(captureArea, { scale: 2, backgroundColor: '#ffffff' });
+        const canvas = await html2canvas(captureArea, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            width: captureArea.offsetWidth,
+            height: captureArea.offsetHeight
+        });
         canvas.toBlob(async (blob) => {
             try {
                 if (navigator.clipboard && window.ClipboardItem) {
