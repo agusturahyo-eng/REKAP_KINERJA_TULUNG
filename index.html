@@ -297,14 +297,17 @@
 
         <div class="card">
             <h3>📊 3. Upload Work Order Harian (Preventif / Korektif - File Excel)</h3>
-            <p style="font-size:12px;color:#555;">Pilih jenis laporan dan ketik tanggal pekerjaan (misal hari ini upload pekerjaan kemarin, isi tanggal kemarin).</p>
-            <select id="jenisWo">
-                <option value="PREVENTIF">PREVENTIF</option>
-                <option value="KOREKTIF">KOREKTIF</option>
-            </select>
-            <input type="number" id="tglWo" placeholder="Tgl (1-31)" min="1" max="31" style="width:90px;">
-            <input type="file" id="fileWo" accept=".xlsx,.xls">
-            <button class="action orange" id="btnWo" onclick="uploadExcelWo()">📤 Proses Excel WO</button>
+            <p style="font-size:12px;color:#555;">Hanya menghitung realisasi kunjungan lapangan yang sah (<b>Lunas Mandiri, Lunas Offline, Janji Bayar, Rumah Kosong/Pagar Dikunci</b>) — kolom <b>Lunas Tanpa Kunjungan, Tidak Tersampaikan, dan Expired otomatis dikecualikan (tidak dihitung)</b>. Bisa memilih banyak file sekaligus (tanggal otomatis terbaca dari nama file seperti <code>prev10112026.xlsx</code>).</p>
+            <div class="action-bar">
+                <select id="jenisWo">
+                    <option value="PREVENTIF">PREVENTIF</option>
+                    <option value="KOREKTIF">KOREKTIF</option>
+                </select>
+                <input type="number" id="tglWo" placeholder="Tgl (Opsional)" min="1" max="31" style="width:105px;" title="Isi tanggal (1-31), atau kosongkan jika nama file sudah memuat tanggal seperti prev10112026.xlsx">
+                <input type="file" id="fileWo" accept=".xlsx,.xls" multiple>
+                <button class="action orange" id="btnWo" onclick="uploadExcelWo()">📤 Proses Excel WO</button>
+                <button class="action red" onclick="resetDataWoBulanIni()">🗑️ Reset Data WO Bulan Ini</button>
+            </div>
             <div id="st-wo" class="status"></div>
         </div>
     </div>
@@ -2091,55 +2094,155 @@ async function tarikLangsungDariAcmt() {
     }
 }
 
-// ================= 3. UPLOAD EXCEL PREVENTIF & KOREKTIF HARIAN =================
-async function uploadExcelWo() {
-    const f = document.getElementById('fileWo').files[0];
-    const tgl = parseInt(document.getElementById('tglWo').value);
-    const jenis = document.getElementById('jenisWo').value;
-    const bln = parseInt(document.getElementById('pilihBulan').value);
-    const thn = parseInt(document.getElementById('pilihTahun').value);
+// ================= 3. UPLOAD EXCEL PREVENTIF & KOREKTIF HARIAN (TANPA LUNAS TANPA KUNJUNGAN) =================
+const DATA_CLEAN_PREV_10_15_NOV = [{"jenis_wo":"PREVENTIF","kode_petugas":"c01","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1683,"total_rupiah":230816321,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c02","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1586,"total_rupiah":212242215,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c03","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1469,"total_rupiah":324719381,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c04","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1698,"total_rupiah":143512032,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c05","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1473,"total_rupiah":179233035,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c06","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1655,"total_rupiah":158627601,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c07","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1590,"total_rupiah":204452700,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c08","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1659,"total_rupiah":204407580,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c09","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1587,"total_rupiah":110924619,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c10","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1189,"total_rupiah":85780656,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c11","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1548,"total_rupiah":441887829,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c12","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1605,"total_rupiah":195651965,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c13","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1432,"total_rupiah":147662041,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c14","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1674,"total_rupiah":125097248,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c15","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1641,"total_rupiah":248749740,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c16","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1637,"total_rupiah":157120284,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c17","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1420,"total_rupiah":180507573,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c18","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1635,"total_rupiah":188056721,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c19","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1525,"total_rupiah":189139303,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c20","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1459,"total_rupiah":157426427,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c21","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1454,"total_rupiah":157433694,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c22","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1259,"total_rupiah":154833271,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c23","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1410,"total_rupiah":109031325,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c24","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1384,"total_rupiah":155858675,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c25","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1425,"total_rupiah":171700719,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c26","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1423,"total_rupiah":214975205,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c27","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":400,"total_rupiah":34927223,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c28","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1424,"total_rupiah":185947712,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c29","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1537,"total_rupiah":143959375,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c30","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1598,"total_rupiah":191347064,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c31","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1579,"total_rupiah":105027320,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c32","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1563,"total_rupiah":158822420,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c33","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1610,"total_rupiah":241811294,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c34","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1467,"total_rupiah":215415988,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c35","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1686,"total_rupiah":193260097,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c36","tgl_harian":10,"bulan_ke":11,"tahun":2026,"total_lembar":1424,"total_rupiah":145273762,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c01","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1683,"total_rupiah":230816321,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c02","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1586,"total_rupiah":212242215,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c03","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1469,"total_rupiah":324719381,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c04","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1698,"total_rupiah":143512032,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c05","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1473,"total_rupiah":179233035,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c06","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1655,"total_rupiah":158627601,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c07","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1590,"total_rupiah":204452700,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c08","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1659,"total_rupiah":204407580,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c09","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1587,"total_rupiah":110924619,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c10","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1189,"total_rupiah":85780656,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c11","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1548,"total_rupiah":441887829,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c12","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1605,"total_rupiah":195651965,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c13","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1432,"total_rupiah":147662041,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c14","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1674,"total_rupiah":125097248,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c15","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1641,"total_rupiah":248749740,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c16","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1637,"total_rupiah":157120284,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c17","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1420,"total_rupiah":180507573,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c18","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1635,"total_rupiah":188056721,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c19","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1525,"total_rupiah":189139303,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c20","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1459,"total_rupiah":157426427,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c21","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1454,"total_rupiah":157433694,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c22","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1259,"total_rupiah":154833271,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c23","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1410,"total_rupiah":109031325,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c24","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1384,"total_rupiah":155858675,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c25","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1425,"total_rupiah":171700719,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c26","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1423,"total_rupiah":214975205,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c27","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":400,"total_rupiah":34927223,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c28","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1424,"total_rupiah":185947712,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c29","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1537,"total_rupiah":143959375,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c30","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1598,"total_rupiah":191347064,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c31","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1579,"total_rupiah":105027320,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c32","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1563,"total_rupiah":158822420,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c33","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1610,"total_rupiah":241811294,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c34","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1467,"total_rupiah":215415988,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c35","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1686,"total_rupiah":193260097,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c36","tgl_harian":11,"bulan_ke":11,"tahun":2026,"total_lembar":1424,"total_rupiah":145273762,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c01","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1683,"total_rupiah":230816321,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c02","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1586,"total_rupiah":212242215,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c03","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1469,"total_rupiah":324719381,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c04","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1698,"total_rupiah":143512032,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c05","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1473,"total_rupiah":179233035,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c06","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1655,"total_rupiah":158627601,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c07","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1590,"total_rupiah":204452700,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c08","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1659,"total_rupiah":204407580,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c09","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1587,"total_rupiah":110924619,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c10","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1189,"total_rupiah":85780656,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c11","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1548,"total_rupiah":441887829,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c12","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1605,"total_rupiah":195651965,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c13","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1432,"total_rupiah":147662041,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c14","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1674,"total_rupiah":125097248,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c15","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1641,"total_rupiah":248749740,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c16","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1637,"total_rupiah":157120284,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c17","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1420,"total_rupiah":180507573,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c18","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1635,"total_rupiah":188056721,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c19","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1525,"total_rupiah":189139303,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c20","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1459,"total_rupiah":157426427,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c21","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1454,"total_rupiah":157433694,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c22","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1259,"total_rupiah":154833271,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c23","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1410,"total_rupiah":109031325,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c24","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1384,"total_rupiah":155858675,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c25","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1425,"total_rupiah":171700719,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c26","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1423,"total_rupiah":214975205,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c27","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":400,"total_rupiah":34927223,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c28","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1424,"total_rupiah":185947712,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c29","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1537,"total_rupiah":143959375,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c30","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1598,"total_rupiah":191347064,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c31","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1579,"total_rupiah":105027320,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c32","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1563,"total_rupiah":158822420,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c33","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1610,"total_rupiah":241811294,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c34","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1467,"total_rupiah":215415988,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c35","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1686,"total_rupiah":193260097,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c36","tgl_harian":12,"bulan_ke":11,"tahun":2026,"total_lembar":1424,"total_rupiah":145273762,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c01","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1683,"total_rupiah":230816321,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c02","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1586,"total_rupiah":212242215,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c03","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1469,"total_rupiah":324719381,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c04","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1698,"total_rupiah":143512032,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c05","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1473,"total_rupiah":179233035,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c06","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1655,"total_rupiah":158627601,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c07","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1590,"total_rupiah":204452700,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c08","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1659,"total_rupiah":204407580,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c09","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1587,"total_rupiah":110924619,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c10","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1189,"total_rupiah":85780656,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c11","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1548,"total_rupiah":441887829,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c12","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1605,"total_rupiah":195651965,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c13","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1432,"total_rupiah":147662041,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c14","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1674,"total_rupiah":125097248,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c15","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1641,"total_rupiah":248749740,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c16","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1637,"total_rupiah":157120284,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c17","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1420,"total_rupiah":180507573,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c18","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1635,"total_rupiah":188056721,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c19","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1525,"total_rupiah":189139303,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c20","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1459,"total_rupiah":157426427,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c21","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1454,"total_rupiah":157433694,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c22","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1259,"total_rupiah":154833271,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c23","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1410,"total_rupiah":109031325,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c24","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1384,"total_rupiah":155858675,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c25","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1425,"total_rupiah":171700719,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c26","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1423,"total_rupiah":214975205,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c27","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":400,"total_rupiah":34927223,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c28","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1424,"total_rupiah":185947712,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c29","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1537,"total_rupiah":143959375,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c30","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1598,"total_rupiah":191347064,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c31","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1579,"total_rupiah":105027320,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c32","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1563,"total_rupiah":158822420,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c33","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1610,"total_rupiah":241811294,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c34","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1467,"total_rupiah":215415988,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c35","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1686,"total_rupiah":193260097,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c36","tgl_harian":13,"bulan_ke":11,"tahun":2026,"total_lembar":1424,"total_rupiah":145273762,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c01","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1683,"total_rupiah":230816321,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c02","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1586,"total_rupiah":212242215,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c03","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1469,"total_rupiah":324719381,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c04","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1698,"total_rupiah":143512032,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c05","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1473,"total_rupiah":179233035,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c06","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1655,"total_rupiah":158627601,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c07","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1590,"total_rupiah":204452700,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c08","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1659,"total_rupiah":204407580,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c09","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1587,"total_rupiah":110924619,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c10","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1189,"total_rupiah":85780656,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c11","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1548,"total_rupiah":441887829,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c12","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1605,"total_rupiah":195651965,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c13","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1432,"total_rupiah":147662041,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c14","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1674,"total_rupiah":125097248,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c15","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1641,"total_rupiah":248749740,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c16","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1637,"total_rupiah":157120284,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c17","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1420,"total_rupiah":180507573,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c18","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1635,"total_rupiah":188056721,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c19","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1525,"total_rupiah":189139303,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c20","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1459,"total_rupiah":157426427,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c21","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1454,"total_rupiah":157433694,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c22","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1259,"total_rupiah":154833271,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c23","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1410,"total_rupiah":109031325,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c24","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1384,"total_rupiah":155858675,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c25","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1425,"total_rupiah":171700719,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c26","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1423,"total_rupiah":214975205,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c27","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":400,"total_rupiah":34927223,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c28","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1424,"total_rupiah":185947712,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c29","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1537,"total_rupiah":143959375,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c30","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1598,"total_rupiah":191347064,"jml_close":7},{"jenis_wo":"PREVENTIF","kode_petugas":"c31","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1579,"total_rupiah":105027320,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c32","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1563,"total_rupiah":158822420,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c33","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1610,"total_rupiah":241811294,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c34","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1467,"total_rupiah":215415988,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c35","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1686,"total_rupiah":193260097,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c36","tgl_harian":14,"bulan_ke":11,"tahun":2026,"total_lembar":1424,"total_rupiah":145273762,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c01","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1683,"total_rupiah":230816321,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c02","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1586,"total_rupiah":212242215,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c03","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1469,"total_rupiah":324719381,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c04","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1698,"total_rupiah":143512032,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c05","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1473,"total_rupiah":179233035,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c06","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1655,"total_rupiah":158627601,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c07","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1590,"total_rupiah":204452700,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c08","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1659,"total_rupiah":204407580,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c09","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1587,"total_rupiah":110924619,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c10","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1189,"total_rupiah":85780656,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c11","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1548,"total_rupiah":441887829,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c12","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1605,"total_rupiah":195651965,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c13","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1432,"total_rupiah":147662041,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c14","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1674,"total_rupiah":125097248,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c15","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1641,"total_rupiah":248749740,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c16","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1637,"total_rupiah":157120284,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c17","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1420,"total_rupiah":180507573,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c18","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1635,"total_rupiah":188056721,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c19","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1525,"total_rupiah":189139303,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c20","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1459,"total_rupiah":157426427,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c21","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1454,"total_rupiah":157433694,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c22","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1259,"total_rupiah":154833271,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c23","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1410,"total_rupiah":109031325,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c24","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1384,"total_rupiah":155858675,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c25","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1425,"total_rupiah":171700719,"jml_close":74},{"jenis_wo":"PREVENTIF","kode_petugas":"c26","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1423,"total_rupiah":214975205,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c27","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":400,"total_rupiah":34927223,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c28","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1424,"total_rupiah":185947712,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c29","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1537,"total_rupiah":143959375,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c30","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1598,"total_rupiah":191347064,"jml_close":1},{"jenis_wo":"PREVENTIF","kode_petugas":"c31","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1579,"total_rupiah":105027320,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c32","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1563,"total_rupiah":158822420,"jml_close":62},{"jenis_wo":"PREVENTIF","kode_petugas":"c33","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1610,"total_rupiah":241811294,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c34","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1467,"total_rupiah":215415988,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c35","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1686,"total_rupiah":193260097,"jml_close":0},{"jenis_wo":"PREVENTIF","kode_petugas":"c36","tgl_harian":15,"bulan_ke":11,"tahun":2026,"total_lembar":1424,"total_rupiah":145273762,"jml_close":0}];
 
-    if (!f || !tgl) return setStatus('st-wo', '⚠️ Pilih file Excel dan isi Tanggal (1-31)!', 'err');
+async function pastikanPerbaikanPreventifNov2026() {
+    if (localStorage.getItem('fixed_prev_nov2026_tanpa_kunjungan_v2') === '1') return;
+    try {
+        await db.from('rekap_wo_harian').delete().eq('jenis_wo', 'PREVENTIF').eq('bulan_ke', 11).eq('tahun', 2026);
+        const { error } = await db.from('rekap_wo_harian').upsert(DATA_CLEAN_PREV_10_15_NOV, { onConflict: 'jenis_wo,kode_petugas,tgl_harian,bulan_ke,tahun' });
+        if (!error) {
+            localStorage.setItem('fixed_prev_nov2026_tanpa_kunjungan_v2', '1');
+        }
+    } catch (e) {
+        console.warn('Auto-fix Preventif Nov 2026:', e.message);
+    }
+}
+
+function tentukanKolomCloseWoTanpaKunjungan(rows, jenis) {
+    // Deteksi dinamis dari baris header Excel (Baris 1: CLOSE/TIDAK CLOSE, Baris 2: Nama Kategori, Baris 3: Lembar/Rupiah)
+    const r1 = rows[1] || [];
+    const r2 = rows[2] || [];
+    const r3 = rows[3] || [];
+
+    let startClose = -1, endClose = r3.length;
+    for (let c = 0; c < r1.length; c++) {
+        const h1 = String(r1[c] || '').trim().toUpperCase();
+        if (h1 === 'CLOSE') startClose = c;
+        else if (h1.includes('TIDAK CLOSE') && startClose !== -1) { endClose = c; break; }
+    }
+
+    if (startClose !== -1) {
+        const colsValid = [];
+        let lastKategori = '';
+        for (let c = startClose; c < endClose; c++) {
+            if (r2[c] !== undefined && r2[c] !== null && String(r2[c]).trim() !== '') {
+                lastKategori = String(r2[c]).trim().toUpperCase();
+            }
+            const h3 = String(r3[c] || '').trim().toUpperCase();
+            // Ambil hanya kolom 'LEMBAR' yang BUKAN 'LUNAS TANPA KUNJUNGAN', BUKAN 'TIDAK TERSAMPAIKAN', dan BUKAN 'EXPIRED'
+            const isExcluded = lastKategori.includes('TANPA KUNJUNGAN') ||
+                               lastKategori.includes('TIDAK TERSAMPAIKAN') ||
+                               lastKategori.includes('EXPIRED');
+            if (h3 === 'LEMBAR' && !isExcluded) {
+                colsValid.push(c);
+            }
+        }
+        if (colsValid.length > 0) return colsValid;
+    }
+
+    // Fallback standar jika header tidak terbaca:
+    // PREVENTIF: Hanya Kolom 6 (Lunas Mandiri), 8 (Lunas Offline), 10 (Janji Bayar), 12 (Rumah Kosong / Pagar dikunci).
+    // Kolom 14 (Lunas Tanpa Kunjungan), Kolom 16 (Tidak Tersampaikan), dan Kolom 18 (Expired) DIKECUALIKAN!
+    if (jenis === 'PREVENTIF') return [6, 8, 10, 12];
+    return [6, 8, 10, 12, 18, 20, 22, 24];
+}
+
+async function uploadExcelWo() {
+    const fileList = document.getElementById('fileWo').files;
+    const tglInput = parseInt(document.getElementById('tglWo').value);
+    const jenis = document.getElementById('jenisWo').value;
+    const blnDefault = parseInt(document.getElementById('pilihBulan').value);
+    const thnDefault = parseInt(document.getElementById('pilihTahun').value);
+
+    if (!fileList || !fileList.length) return setStatus('st-wo', '⚠️ Pilih minimal 1 file Excel WO terlebih dahulu!', 'err');
     const btn = document.getElementById('btnWo');
     btn.disabled = true;
-    setStatus('st-wo', `⏳ Memproses Excel ${jenis} Tanggal ${tgl}...`, 'info');
 
     try {
-        const buf = await f.arrayBuffer();
-        const wb = XLSX.read(buf, { type: 'array' });
-        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+        const allDataInsert = [];
+        const tglTerproses = [];
 
-        const dataInsert = [];
-        for (let i = 0; i < rows.length; i++) {
-            const r = rows[i];
-            if (!r || r.length < 6) continue;
-            const ptg = String(r[1] || '').trim();
-            const mPtg = ptg.match(/52405\.([cC]\d{2})/);
-            if (!mPtg) continue;
+        for (let fIdx = 0; fIdx < fileList.length; fIdx++) {
+            const f = fileList[fIdx];
+            // Cek apakah nama file mengandung tanggal (misal prev10112026.xlsx -> tgl 10, bln 11, thn 2026)
+            let tgl = tglInput;
+            let bln = blnDefault;
+            let thn = thnDefault;
 
-            const kode = normalisasiKodePetugas(mPtg[1]);
-            let jmlClose = 0;
-            if (jenis === 'PREVENTIF') {
-                [6, 8, 10, 12, 14, 16].forEach(idx => { jmlClose += (parseInt(r[idx]) || 0); });
-            } else {
-                [6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26].forEach(idx => { jmlClose += (parseInt(r[idx]) || 0); });
+            const mFileDate = f.name.match(/(\d{2})(\d{2})(\d{4})/);
+            if (mFileDate && (fileList.length > 1 || !tgl)) {
+                tgl = parseInt(mFileDate[1]);
+                bln = parseInt(mFileDate[2]);
+                thn = parseInt(mFileDate[3]);
+            }
+            if (!tgl || tgl < 1 || tgl > 31) {
+                throw new Error(`Tanggal belum diisi dan tidak ditemukan pada nama file "${f.name}". Silakan isi kolom Tgl (1-31)!`);
             }
 
-            dataInsert.push({
-                jenis_wo: jenis, kode_petugas: kode, tgl_harian: tgl, bulan_ke: bln, tahun: thn,
-                total_lembar: parseInt(r[2]) || 0, total_rupiah: parseInt(r[3]) || 0, jml_close: jmlClose
-            });
+            setStatus('st-wo', `⏳ Memproses file ${fIdx + 1}/${fileList.length}: ${f.name} (${jenis} Tgl ${tgl}/${bln}/${thn})...`, 'info');
+            const buf = await f.arrayBuffer();
+            const wb = XLSX.read(buf, { type: 'array' });
+            const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+
+            const colsCloseValid = tentukanKolomCloseWoTanpaKunjungan(rows, jenis);
+
+            for (let i = 0; i < rows.length; i++) {
+                const r = rows[i];
+                if (!r || r.length < 6) continue;
+                const ptg = String(r[1] || '').trim();
+                const mPtg = ptg.match(/52405\.([cC]\d{2})/);
+                if (!mPtg) continue;
+
+                const kode = normalisasiKodePetugas(mPtg[1]);
+                let jmlClose = 0;
+                colsCloseValid.forEach(idx => {
+                    jmlClose += (parseInt(r[idx]) || 0);
+                });
+
+                allDataInsert.push({
+                    jenis_wo: jenis,
+                    kode_petugas: kode,
+                    tgl_harian: tgl,
+                    bulan_ke: bln,
+                    tahun: thn,
+                    total_lembar: parseInt(r[2]) || 0,
+                    total_rupiah: parseInt(r[3]) || 0,
+                    jml_close: jmlClose
+                });
+            }
+            tglTerproses.push(tgl);
         }
 
-        if (!dataInsert.length) throw new Error("Baris petugas 52405.Cxx tidak ditemukan di file Excel.");
-        const { error } = await db.from('rekap_wo_harian').upsert(dataInsert, { onConflict: 'jenis_wo,kode_petugas,tgl_harian,bulan_ke,tahun' });
+        if (!allDataInsert.length) throw new Error("Baris petugas 52405.Cxx tidak ditemukan di file Excel.");
+        const { error } = await db.from('rekap_wo_harian').upsert(allDataInsert, { onConflict: 'jenis_wo,kode_petugas,tgl_harian,bulan_ke,tahun' });
         if (error) throw error;
 
-        setStatus('st-wo', `✅ Berhasil menyimpan ${dataInsert.length} petugas (${jenis} Tgl ${tgl})!`, 'ok');
+        const totClose = allDataInsert.reduce((acc, x) => acc + (x.jml_close || 0), 0);
+        setStatus('st-wo', `✅ Berhasil menyimpan ${fileList.length} file (${jenis} Tgl ${tglTerproses.join(', ')}) — Total Realisasi Kunjungan Sah (Tanpa Lunas Tanpa Kunjungan, Tidak Tersampaikan & Expired): ${totClose} pelanggan!`, 'ok');
+        if (cacheDataDashboard) await loadRekap();
     } catch (e) {
         setStatus('st-wo', '❌ Error: ' + e.message, 'err');
     } finally {
         btn.disabled = false;
+    }
+}
+
+async function resetDataWoBulanIni() {
+    const jenis = document.getElementById('jenisWo').value;
+    const bln = parseInt(document.getElementById('pilihBulan').value);
+    const thn = parseInt(document.getElementById('pilihTahun').value);
+    if (!confirm(`Yakin ingin mengosongkan/mereset seluruh data WO ${jenis} pada Bulan ${bln}/${thn}?`)) return;
+
+    setStatus('st-wo', `⏳ Mereset data WO ${jenis} Bulan ${bln}/${thn}...`, 'info');
+    try {
+        const { error } = await db.from('rekap_wo_harian').delete().eq('jenis_wo', jenis).eq('bulan_ke', bln).eq('tahun', thn);
+        if (error) throw error;
+        setStatus('st-wo', `✅ Seluruh data WO ${jenis} Bulan ${bln}/${thn} berhasil direset menjadi 0!`, 'ok');
+        if (cacheDataDashboard) await loadRekap();
+    } catch (e) {
+        setStatus('st-wo', '❌ Gagal mereset: ' + e.message, 'err');
     }
 }
 
@@ -2152,6 +2255,7 @@ async function loadRekap() {
     setStatus('st-rekap', '⏳ Memuat rekapitulasi dari Supabase...', 'info');
 
     try {
+        await pastikanPerbaikanPreventifNov2026();
         const [ptgRes, pdilRes, mobRes, woRes] = await Promise.all([
             db.from('master_petugas').select('*').order('no_urut', { ascending: true }),
             fetchAllSupabase(() => db.from('input_pdil').select('kode_petugas, valid_hitung').eq('bulan_ke', bln).eq('tahun', thn)),
@@ -2345,6 +2449,7 @@ async function muatMatriksHarian() {
     setStatus('st-harian', `⏳ Memuat rekap matriks harian (Tgl 1-31) Bulan ${namaBln} ${thn}...`, 'info');
 
     try {
+        await pastikanPerbaikanPreventifNov2026();
         const [ptgRes, pdilRes, mobRes, woRes] = await Promise.all([
             db.from('master_petugas').select('*').order('no_urut', { ascending: true }),
             fetchAllSupabase(() => db.from('input_pdil').select('kode_petugas, tgl_harian, valid_hitung').eq('bulan_ke', bln).eq('tahun', thn)),
