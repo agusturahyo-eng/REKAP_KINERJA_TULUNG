@@ -531,10 +531,10 @@
 
             <div id="box-paste-target" style="display:none; background:#f8f9fa; padding:10px; border:1px dashed #0056b3; border-radius:6px; margin-bottom:10px;">
                 <div style="font-size:12px; margin-bottom:5px; color:#333;">
-                    <b>Cara Pakai:</b> Blok dan Copy (<code>Ctrl+C</code>) 1 kolom angka target (urut 36 petugas) ATAU 2 kolom (<code>Kode C01</code> dan <code>Angka Target</code>) dari Excel, lalu Paste (<code>Ctrl+V</code>) di kotak bawah ini:
+                    <b>Cara Pakai:</b> Blok dan Copy (<code>Ctrl+C</code>) 2 kolom (<code>NIK</code> dan <code>Target</code>) ATAU (<code>Kode C01</code> dan <code>Target</code>) ATAU 1 kolom angka target dari Excel, lalu Paste (<code>Ctrl+V</code>) di kotak bawah ini:
                 </div>
                 <div style="display:flex; gap:10px; align-items:flex-start;">
-                    <textarea id="txtPasteTarget" placeholder="Contoh format 1 kolom (urut):&#10;120&#10;135&#10;90&#10;&#10;Atau 2 kolom (Kode [Tab] Target):&#10;c01	120&#10;c02	135" style="width:320px; height:85px; font-family:monospace;"></textarea>
+                    <textarea id="txtPasteTarget" placeholder="Contoh format 2 kolom (NIK [Tab] Target):&#10;8221214KLT	97&#10;9021222KLT	114&#10;&#10;Atau 2 kolom (Kode [Tab] Target):&#10;c01	97&#10;c02	114" style="width:320px; height:85px; font-family:monospace;"></textarea>
                     <div>
                         <button class="action orange" onclick="prosesPasteTargetRekap()">⚡ Terapkan Hasil Paste ke Daftar</button>
                         <p style="font-size:11px; color:#666; margin-top:5px;">Setelah diterapkan ke daftar di bawah, klik tombol hijau <b>"💾 Simpan Target Rekap Ini ke Database"</b>.</p>
@@ -3902,23 +3902,34 @@ async function isiSerentakTargetRekap() {
     setStatus('st-master', `⚡ Angka ${angka} berhasil diterapkan ke seluruh petugas di bawah! Sekarang klik tombol hijau "💾 Simpan Target Rekap Ini ke Database".`, 'info');
 }
 
-function downloadTemplateTargetRekap() {
+async function downloadTemplateTargetRekap() {
     const sel = document.getElementById('pilihRekapTarget');
     const field = sel.value;
     const labelRekap = sel.options[sel.selectedIndex].text.toUpperCase().replace(/\s+/g, '_');
 
-    const rows = masterPetugasList.map(p => ({
-        "NO_URUT": p.no_urut,
-        "KODE_BACA": (p.kode_baca || '').toUpperCase(),
-        "NIP": p.nip || '',
-        "NAMA_PETUGAS": p.nama_petugas || '',
-        "TARGET": p[field] || 0
-    }));
+    try {
+        if (!masterPetugasList.length) {
+            await muatMasterPetugas();
+        }
+        if (!masterPetugasList.length) {
+            return setStatus('st-master', '⚠️ Daftar petugas di database masih kosong!', 'err');
+        }
 
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, labelRekap);
-    XLSX.writeFile(wb, `Template_${labelRekap}_ULP_Tulung.xlsx`);
+        // Template kolektif sederhana: hanya berisi kolom NIK dan TARGET
+        const rows = masterPetugasList.map(p => ({
+            "NIK": String(p.nip || '').trim(),
+            "TARGET": p[field] || 0
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(rows);
+        ws['!cols'] = [{ wch: 18 }, { wch: 12 }];
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, labelRekap.substring(0, 31));
+        XLSX.writeFile(wb, `Template_${labelRekap}_NIK.xlsx`);
+        setStatus('st-master', `✅ Template Excel ${labelRekap} (${rows.length} NIK petugas) berhasil diunduh!`, 'ok');
+    } catch (e) {
+        setStatus('st-master', '❌ Gagal mengunduh template: ' + e.message, 'err');
+    }
 }
 
 async function uploadFileTargetSatuRekap() {
@@ -3926,13 +3937,25 @@ async function uploadFileTargetSatuRekap() {
     if (!f) return setStatus('st-master', '⚠️ Pilih file Excel/CSV terlebih dahulu!', 'err');
 
     const sel = document.getElementById('pilihRekapTarget');
+    const field = sel.value;
     const namaRekap = sel.options[sel.selectedIndex].text;
 
     try {
+        if (!masterPetugasList.length) {
+            await muatMasterPetugas();
+        } else if (!document.querySelectorAll('.tgt-rekap-item').length) {
+            renderGridTargetPerRekap();
+        }
+
         const buf = await f.arrayBuffer();
         const wb = XLSX.read(buf, { type: 'array' });
         const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
         if (!rows.length) throw new Error("File Excel kosong!");
+
+        // Daftar NIK resmi dari master petugas untuk pencocokan akurat
+        const setNikMaster = new Set(
+            masterPetugasList.map(p => String(p.nip || '').trim().toUpperCase()).filter(Boolean)
+        );
 
         const mapTargetByKey = {};
         const listAngkaUrut = [];
@@ -3940,43 +3963,65 @@ async function uploadFileTargetSatuRekap() {
         for (let i = 0; i < rows.length; i++) {
             const r = rows[i];
             if (!r || !r.length) continue;
-            const gabungBaris = r.map(x => String(x || '').toUpperCase()).join('|');
-            if (gabungBaris.includes('KODE_BACA') || gabungBaris.includes('NAMA_PETUGAS') || gabungBaris.includes('TARGET')) continue;
+            const gabungBaris = r.map(x => String(x || '').trim().toUpperCase()).join('|');
+            if (
+                gabungBaris.includes('NIK') ||
+                gabungBaris.includes('NIP') ||
+                gabungBaris.includes('KODE_BACA') ||
+                gabungBaris.includes('NAMA_PETUGAS') ||
+                gabungBaris.includes('TARGET')
+            ) continue;
 
-            if (r.length === 1 && !isNaN(parseInt(r[0]))) {
-                listAngkaUrut.push(parseInt(r[0]) || 0);
+            // Jika hanya 1 kolom angka urut
+            if (r.length === 1 && /^-?\d+(\.\d+)?$/.test(String(r[0] ?? '').trim())) {
+                listAngkaUrut.push(Math.round(parseFloat(r[0])) || 0);
                 continue;
             }
 
-            let foundKey = null;
+            // Cari nilai TARGET dari kolom paling kanan yang berupa angka
             let targetVal = null;
-
-            for (let k = 0; k < r.length; k++) {
-                const cellStr = String(r[k] ?? '').trim();
-                if (!cellStr) continue;
-                const mKode = cellStr.match(/(?:52405\.)?([cC]\d{2})\b/);
-                if (mKode && !foundKey) {
-                    foundKey = mKode[1].toLowerCase();
-                } else if (/^\d{6,10}[A-Z]{2,4}$/i.test(cellStr) && !foundKey) {
-                    foundKey = cellStr.toUpperCase();
-                }
-            }
-
+            let idxTargetCol = -1;
             for (let k = r.length - 1; k >= 0; k--) {
                 const v = String(r[k] ?? '').trim();
                 if (v !== '' && /^-?\d+(\.\d+)?$/.test(v)) {
                     targetVal = Math.round(parseFloat(v));
+                    idxTargetCol = k;
+                    break;
+                }
+            }
+            if (targetVal === null) continue;
+
+            // Prioritas 1: Cari kecocokan langsung NIK / NIP di kolom sebelum kolom target
+            let foundKey = null;
+            for (let k = 0; k < idxTargetCol; k++) {
+                const cellUp = String(r[k] ?? '').trim().toUpperCase();
+                if (!cellUp) continue;
+                if (setNikMaster.has(cellUp)) {
+                    foundKey = cellUp;
                     break;
                 }
             }
 
-            if (targetVal !== null) {
-                if (foundKey) {
-                    mapTargetByKey[foundKey] = targetVal;
-                } else {
-                    const kandidatNama = String(r[1] || r[0] || '').trim().toUpperCase();
-                    if (kandidatNama) mapTargetByKey[kandidatNama] = targetVal;
+            // Prioritas 2: Jika tidak cocok langsung di setNikMaster, cek format Kode Petugas (c01..c36) atau ambil teks kolom pertama (NIK/Nama)
+            if (!foundKey) {
+                for (let k = 0; k < idxTargetCol; k++) {
+                    const cellStr = String(r[k] ?? '').trim();
+                    if (!cellStr) continue;
+                    const mKode = cellStr.match(/(?:52405\.)?([cC]\d{2})\b/);
+                    if (mKode) {
+                        foundKey = normalisasiKodePetugas(mKode[1]);
+                        break;
+                    }
                 }
+            }
+
+            if (!foundKey && idxTargetCol > 0) {
+                const col0 = String(r[0] ?? '').trim().toUpperCase();
+                if (col0) foundKey = col0;
+            }
+
+            if (foundKey) {
+                mapTargetByKey[foundKey] = targetVal;
             }
         }
 
@@ -3984,26 +4029,30 @@ async function uploadFileTargetSatuRekap() {
         let terupdate = 0;
 
         inputs.forEach((inp, idx) => {
-            const kd = inp.getAttribute('data-kode');
-            const nm = inp.getAttribute('data-nama');
-            const nip = inp.getAttribute('data-nip');
+            const kd = (inp.getAttribute('data-kode') || '').toLowerCase();
+            const nm = (inp.getAttribute('data-nama') || '').trim().toUpperCase();
+            const nip = (inp.getAttribute('data-nip') || '').trim().toUpperCase();
 
-            if (mapTargetByKey[kd] !== undefined) {
-                inp.value = mapTargetByKey[kd];
-                terupdate++;
-            } else if (nip && mapTargetByKey[nip] !== undefined) {
-                inp.value = mapTargetByKey[nip];
-                terupdate++;
+            let valBaru = undefined;
+            if (nip && mapTargetByKey[nip] !== undefined) {
+                valBaru = mapTargetByKey[nip];
+            } else if (kd && mapTargetByKey[kd] !== undefined) {
+                valBaru = mapTargetByKey[kd];
             } else if (nm && mapTargetByKey[nm] !== undefined) {
-                inp.value = mapTargetByKey[nm];
-                terupdate++;
+                valBaru = mapTargetByKey[nm];
             } else if (listAngkaUrut.length > idx) {
-                inp.value = listAngkaUrut[idx];
+                valBaru = listAngkaUrut[idx];
+            }
+
+            if (valBaru !== undefined) {
+                inp.value = valBaru;
+                if (masterPetugasList[idx]) masterPetugasList[idx][field] = valBaru;
                 terupdate++;
             }
         });
 
-        if (terupdate === 0) throw new Error("Tidak ditemukan kecocokan Kode Petugas (c01..c36) atau angka target di dalam file.");
+        if (terupdate === 0) throw new Error("Tidak ditemukan kecocokan NIK/NIP petugas atau angka target di dalam file.");
+        renderTabelMaster();
         setStatus('st-master', `✅ Berhasil memuat ${terupdate} target dari file ke ${namaRekap}! Klik "💾 Simpan Target Rekap Ini ke Database".`, 'ok');
     } catch (e) {
         setStatus('st-master', '❌ Gagal membaca file target: ' + e.message, 'err');
@@ -4015,13 +4064,19 @@ function toggleBoxPasteTarget() {
     box.style.display = box.style.display === 'none' ? 'block' : 'none';
 }
 
-function prosesPasteTargetRekap() {
+async function prosesPasteTargetRekap() {
     const raw = document.getElementById('txtPasteTarget').value.trim();
     if (!raw) return setStatus('st-master', '⚠️ Kotak Paste masih kosong!', 'err');
 
+    if (!masterPetugasList.length) {
+        await muatMasterPetugas();
+    } else if (!document.querySelectorAll('.tgt-rekap-item').length) {
+        renderGridTargetPerRekap();
+    }
+
     const lines = raw.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
     const inputs = document.querySelectorAll('.tgt-rekap-item');
-    const mapByKode = {};
+    const mapByKey = {};
     const urutAngka = [];
 
     lines.forEach(line => {
@@ -4029,22 +4084,27 @@ function prosesPasteTargetRekap() {
         if (parts.length === 1 && /^-?\d+$/.test(parts[0])) {
             urutAngka.push(parseInt(parts[0]));
         } else if (parts.length >= 2) {
-            const mKode = parts[0].match(/(?:52405\.)?([cC]\d{2})\b/);
             const angka = parseInt(parts[parts.length - 1]);
-            if (mKode && !isNaN(angka)) {
-                mapByKode[mKode[1].toLowerCase()] = angka;
-            } else if (!isNaN(angka)) {
-                mapByKode[parts[0].toUpperCase()] = angka;
+            if (isNaN(angka)) return;
+            const k0 = parts[0].trim();
+            const mKode = k0.match(/^(?:52405\.)?([cC]\d{2})$/);
+            if (mKode) {
+                mapByKey[normalisasiKodePetugas(mKode[1])] = angka;
+            } else {
+                mapByKey[k0.toUpperCase()] = angka;
             }
         }
     });
 
     let hit = 0;
     inputs.forEach((inp, idx) => {
-        const kd = inp.getAttribute('data-kode');
-        const nm = inp.getAttribute('data-nama');
-        if (mapByKode[kd] !== undefined) { inp.value = mapByKode[kd]; hit++; }
-        else if (mapByKode[nm] !== undefined) { inp.value = mapByKode[nm]; hit++; }
+        const kd = (inp.getAttribute('data-kode') || '').toLowerCase();
+        const nm = (inp.getAttribute('data-nama') || '').trim().toUpperCase();
+        const nip = (inp.getAttribute('data-nip') || '').trim().toUpperCase();
+
+        if (nip && mapByKey[nip] !== undefined) { inp.value = mapByKey[nip]; hit++; }
+        else if (kd && mapByKey[kd] !== undefined) { inp.value = mapByKey[kd]; hit++; }
+        else if (nm && mapByKey[nm] !== undefined) { inp.value = mapByKey[nm]; hit++; }
         else if (urutAngka.length > idx) { inp.value = urutAngka[idx]; hit++; }
     });
 
