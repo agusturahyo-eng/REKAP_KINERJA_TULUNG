@@ -306,7 +306,8 @@
                 <input type="number" id="tglWo" placeholder="Tgl (Opsional)" min="1" max="31" style="width:105px;" title="Isi tanggal (1-31), atau kosongkan jika nama file sudah memuat tanggal seperti prev10112026.xlsx">
                 <input type="file" id="fileWo" accept=".xlsx,.xls" multiple>
                 <button class="action orange" id="btnWo" onclick="uploadExcelWo()">📤 Proses Excel WO</button>
-                <button class="action red" onclick="resetDataWoBulanIni()">🗑️ Reset Data WO Bulan Ini</button>
+                <button class="action red" onclick="hapusDataWoSatuTanggal()">🗑️ Hapus Tgl Ini Saja</button>
+                <button class="action" style="background:#7f1d1d;" onclick="resetDataWoBulanIni()">⚠️ Reset 1 Bulan Penuh</button>
             </div>
             <div id="st-wo" class="status"></div>
         </div>
@@ -2214,6 +2215,34 @@ async function uploadExcelWo() {
     }
 }
 
+async function hapusDataWoSatuTanggal() {
+    const jenis = document.getElementById('jenisWo').value;
+    const tgl = parseInt(document.getElementById('tglWo').value);
+    const bln = parseInt(document.getElementById('pilihBulan').value);
+    const thn = parseInt(document.getElementById('pilihTahun').value);
+
+    if (!tgl || tgl < 1 || tgl > 31) {
+        return setStatus('st-wo', '⚠️ Isi dulu angka Tanggal (1-31) yang ingin dihapus pada kolom Tgl!', 'err');
+    }
+    if (!confirm(`Yakin ingin menghapus data WO ${jenis} khusus Tanggal ${tgl}/${bln}/${thn} saja?\n(Data tanggal lain dan jenis WO lain tetap aman)`)) return;
+
+    setStatus('st-wo', `⏳ Menghapus data WO ${jenis} khusus Tanggal ${tgl}/${bln}/${thn}...`, 'info');
+    try {
+        const { error } = await db.from('rekap_wo_harian')
+            .delete()
+            .eq('jenis_wo', jenis)
+            .eq('tgl_harian', tgl)
+            .eq('bulan_ke', bln)
+            .eq('tahun', thn);
+        if (error) throw error;
+        setStatus('st-wo', `✅ Data WO ${jenis} Tanggal ${tgl}/${bln}/${thn} berhasil dihapus! Tanggal lainnya tetap aman.`, 'ok');
+        if (cacheDataDashboard) await loadRekap();
+        if (cacheMatriksHarian) await muatMatriksHarian();
+    } catch (e) {
+        setStatus('st-wo', '❌ Gagal menghapus data tanggal tersebut: ' + e.message, 'err');
+    }
+}
+
 async function resetDataWoBulanIni() {
     const jenis = document.getElementById('jenisWo').value;
     const bln = parseInt(document.getElementById('pilihBulan').value);
@@ -2226,6 +2255,7 @@ async function resetDataWoBulanIni() {
         if (error) throw error;
         setStatus('st-wo', `✅ Seluruh data WO ${jenis} Bulan ${bln}/${thn} berhasil direset menjadi 0!`, 'ok');
         if (cacheDataDashboard) await loadRekap();
+        if (cacheMatriksHarian) await muatMatriksHarian();
     } catch (e) {
         setStatus('st-wo', '❌ Gagal mereset: ' + e.message, 'err');
     }
