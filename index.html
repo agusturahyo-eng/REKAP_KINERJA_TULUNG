@@ -2926,6 +2926,7 @@ function perbaruiOpsiFilterKdBaca() {
     if (!selKd || !lblKd) return;
 
     if (jenis === 'MOBILE') {
+        selKd.value = 'ALL';
         lblKd.style.display = 'none';
         return;
     }
@@ -3544,13 +3545,18 @@ function getFilteredDetail() {
             }
         }
         if (stFilter !== 'ALL') {
-            if (stFilter === 'SUDAH_PDIL' && r.status_pdil !== 'SUDAH PDIL') return false;
-            if (stFilter === 'BELUM_PDIL' && r.status_pdil !== 'BELUM PDIL') return false;
-            if (stFilter === 'VALID' && r.valid_hitung !== 1) return false;
-            if (stFilter === 'INVALID' && (r.status_pdil !== 'SUDAH PDIL' || r.valid_hitung === 1)) return false;
+            if (jenis === 'MOBILE') {
+                if (stFilter === 'VALID' && r.valid_hitung !== 1) return false;
+                if (stFilter === 'INVALID' && r.valid_hitung === 1) return false;
+            } else {
+                if (stFilter === 'SUDAH_PDIL' && r.status_pdil !== 'SUDAH PDIL') return false;
+                if (stFilter === 'BELUM_PDIL' && r.status_pdil !== 'BELUM PDIL') return false;
+                if (stFilter === 'VALID' && r.valid_hitung !== 1) return false;
+                if (stFilter === 'INVALID' && (r.status_pdil !== 'SUDAH PDIL' || r.valid_hitung === 1)) return false;
+            }
         }
         if (q) {
-            const gabung = `${r.idpel||''} ${r.koked||''} ${r.nama||''} ${r.nama_pelanggan||''} ${r.alamat||''} ${r.tarif||''} ${r.daya||''} ${r.kode_petugas||''} ${r.nama_petugas||''} ${r.kdbaca||''} ${r.status_pdil||''}`.toLowerCase();
+            const gabung = `${r.idpel||''} ${r.koked||''} ${r.nama||''} ${r.nama_pelanggan||''} ${r.alamat||''} ${r.tarif||''} ${r.daya||''} ${r.kode_petugas||''} ${r.nama_petugas||''} ${r.nama_rekap||''} ${r.kdbaca||''} ${r.status_pdil||''} ${r.status_validasi||''} ${r.status_dobel||''}`.toLowerCase();
             if (!gabung.includes(q)) return false;
         }
         return true;
